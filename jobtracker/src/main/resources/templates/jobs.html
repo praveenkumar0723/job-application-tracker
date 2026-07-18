@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <title>Job Application Tracker</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+</head>
+
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+
+    <div class="container">
+
+        <a class="navbar-brand" th:href="@{/jobs}">
+            Job Tracker
+        </a>
+
+        <button class="navbar-toggler"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+
+            <span class="navbar-toggler-icon"></span>
+
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+
+            <ul class="navbar-nav me-auto">
+
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/jobs}">
+                        Dashboard
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/jobs}">
+                        Jobs
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/jobs/add}">
+                        Add Job
+                    </a>
+                </li>
+
+            </ul>
+
+            <div class="d-flex align-items-center">
+
+    <span class="text-white me-3">
+        Welcome,
+        <strong th:text="${username}"></strong>
+    </span>
+                <div class="dropdown">
+
+                    <button class="btn btn-outline-light dropdown-toggle"
+                            type="button"
+                            data-bs-toggle="dropdown">
+
+                        👤 <span th:text="${username}"></span>
+
+                    </button>
+
+                    <ul class="dropdown-menu dropdown-menu-end">
+
+                        <li>
+                            <a class="dropdown-item disabled">
+                                Logged in
+                            </a>
+                        </li>
+
+                        <li><hr class="dropdown-divider"></li>
+
+                        <li>
+                            <a class="dropdown-item" th:href="@{/profile}">
+                                👤 My Profile
+                            </a>
+                        </li>
+
+                        <li><hr class="dropdown-divider"></li>
+
+                        <li>
+                            <a class="dropdown-item"
+                               th:href="@{/change-password}">
+                                🔒 Change Password
+                            </a>
+                        </li>
+
+                        <li><hr class="dropdown-divider"></li>
+
+                        <li>
+                            <form th:action="@{/logout}" method="post">
+                                <button type="submit" class="dropdown-item">
+                                    Logout
+                                </button>
+                            </form>
+                        </li>
+
+                    </ul>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</nav>
+
+<div class="container-fluid px-4 mt-4">
+    <!-- Success Message -->
+    <div th:if="${successMessage}"
+         class="alert alert-success alert-dismissible fade show"
+         role="alert">
+
+        <span th:text="${successMessage}"></span>
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert">
+        </button>
+
+    </div>
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <!-- Left Side -->
+        <div>
+            <h2 class="fw-bold">Job Application Tracker</h2>
+
+            <p class="text-muted mb-2">
+                Manage your job applications efficiently
+            </p>
+
+            <a th:href="@{/jobs/add}" class="btn btn-primary">
+                + Add Job
+            </a>
+
+            <a th:href="@{/jobs/export}" class="btn btn-success ms-2">
+                📊 Export Excel
+            </a>
+
+            <a th:href="@{/jobs/export/pdf}" class="btn btn-danger ms-2">
+                📄 Export PDF
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- Dashboard Statistics -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-sm-6 col-md-4 col-lg">            <div class="card text-center border-primary">
+                <div class="card-body">
+                    <h6>Total Jobs</h6>
+                    <h3 th:text="${totalJobs}"></h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-md-4 col-lg">            <div class="card text-center border-secondary">
+                <div class="card-body">
+                    <h6>Applied</h6>
+                    <h3 th:text="${appliedCount}"></h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-md-4 col-lg">            <div class="card text-center border-warning">
+                <div class="card-body">
+                    <h6>Interview</h6>
+                    <h3 th:text="${interviewCount}"></h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-md-4 col-lg">            <div class="card text-center border-success">
+                <div class="card-body">
+                    <h6>Selected</h6>
+                    <h3 th:text="${selectedCount}"></h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-md-4 col-lg">            <div class="card text-center border-danger">
+                <div class="card-body">
+                    <h6>Rejected</h6>
+                    <h3 th:text="${rejectedCount}"></h3>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card mb-4">
+
+        <div class="card-header">
+            <h5>Job Status Overview</h5>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <!-- Pie Chart -->
+                <div class="col-md-6">
+
+                    <canvas id="jobChart"></canvas>
+
+                </div>
+
+                <!-- Summary -->
+                <div class="col-lg-6 col-md-12">
+                    <h5 class="mb-3">Quick Summary</h5>
+
+                    <table class="table table-bordered">
+
+                        <tr>
+                            <th>Total Jobs</th>
+                            <td th:text="${totalJobs}"></td>
+                        </tr>
+
+                        <tr>
+                            <th>Applied</th>
+                            <td th:text="${appliedCount}"></td>
+                        </tr>
+
+                        <tr>
+                            <th>Interview</th>
+                            <td th:text="${interviewCount}"></td>
+                        </tr>
+
+                        <tr>
+                            <th>Selected</th>
+                            <td th:text="${selectedCount}"></td>
+                        </tr>
+
+                        <tr>
+                            <th>Rejected</th>
+                            <td th:text="${rejectedCount}"></td>
+                        </tr>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <hr>
+
+    <!-- Upcoming Interviews -->
+    <div class="card mb-4">
+
+        <div class="card-header">
+            <h5 class="mb-0">📅 Upcoming Interviews</h5>
+        </div>
+
+        <div class="card-body">
+
+            <table class="table table-hover">
+
+                <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Date</th>
+                </tr>
+                </thead>
+
+                <tbody>
+
+                <tr th:each="job : ${upcomingInterviews}">
+
+                    <td th:text="${job.company}"></td>
+
+                    <td th:text="${job.interviewDate}"></td>
+
+                </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <form th:action="@{/jobs/search}" method="get" class="mb-3 d-flex">
+
+        <input type="text"
+               name="company"
+               class="form-control me-2"
+               placeholder="Search by Company">
+
+        <button type="submit" class="btn btn-success">
+            Search
+        </button>
+
+        <a th:href="@{/jobs}" class="btn btn-secondary ms-2">
+            Reset
+        </a>
+
+    </form>
+
+    <!-- Filter -->
+    <form th:action="@{/jobs/filter}" method="get" class="mb-4 d-flex">
+
+        <select name="status" class="form-select me-2">
+
+            <option value="">Select Status</option>
+            <option value="Applied">Applied</option>
+            <option value="Interview">Interview</option>
+            <option value="Selected">Selected</option>
+            <option value="Rejected">Rejected</option>
+
+        </select>
+
+        <button type="submit" class="btn btn-info">
+            Filter
+        </button>
+
+    </form>
+
+    <form th:action="@{/jobs/sort}" method="get" class="mb-4 d-flex">
+
+        <select name="field" class="form-select me-2">
+
+            <option value="company">Sort by Company</option>
+            <option value="jobTitle">Sort by Job Title</option>
+            <option value="status">Sort by Status</option>
+
+        </select>
+
+        <button type="submit" class="btn btn-secondary">
+            Sort
+        </button>
+
+    </form>
+
+    <form th:action="@{/jobs/newest}" method="get" class="mb-4 d-flex">
+
+        <button type="submit" class="btn btn-dark me-2">
+            Newest First
+        </button>
+
+        <a th:href="@{/jobs/oldest}" class="btn btn-outline-dark">
+            Oldest First
+        </a>
+
+    </form>
+
+
+
+    <!-- Jobs Table -->
+    <div class="table-responsive">
+
+        <table class="table table-bordered table-hover">
+            <thead class="table-dark">
+
+            <tr>
+                <th>Company</th>
+                <th>Job Title</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Resume</th>
+                <th>Action</th>
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+        <tr th:each="job : ${jobs}">
+
+            <td th:text="${job.company}"></td>
+            <td th:text="${job.jobTitle}"></td>
+            <td th:text="${job.location}"></td>
+            <td th:text="${job.status}"></td>
+
+            <!-- Resume -->
+            <td>
+
+                <a th:if="${job.resumeFile != null}"
+                   th:href="@{/jobs/download/{file}(file=${job.resumeFile})}"
+                   class="btn btn-primary btn-sm">
+
+                    📄 Download
+
+                </a>
+
+                <span th:if="${job.resumeFile == null}"
+                      class="text-muted">
+
+        No Resume
+
+    </span>
+
+            </td>
+
+            <!-- Action -->
+            <td>
+
+                <a th:href="@{/jobs/edit/{id}(id=${job.id})}"
+                   class="btn btn-warning btn-sm">
+                    Edit
+                </a>
+
+                <a th:href="@{/jobs/delete/{id}(id=${job.id})}"
+                   class="btn btn-danger btn-sm"
+                   onclick="return confirm('Are you sure you want to delete this job?');">
+
+                    Delete
+
+                </a>
+
+            </td>
+
+        </tr>
+
+        </tbody>
+
+    </table>
+    </div>
+
+    <!-- Pagination -->
+    <nav aria-label="Page navigation">
+
+        <ul class="pagination justify-content-center">
+
+            <!-- Previous -->
+            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+
+                <a class="page-link"
+                   th:href="@{/jobs(page=${currentPage - 1})}">
+                    Previous
+                </a>
+
+            </li>
+
+            <!-- Page Numbers -->
+            <li class="page-item"
+                th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                th:classappend="${i == currentPage} ? 'active'">
+
+                <a class="page-link"
+                   th:text="${i + 1}"
+                   th:href="@{/jobs(page=${i})}">
+                </a>
+
+            </li>
+
+            <!-- Next -->
+            <li class="page-item"
+                th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+
+                <a class="page-link"
+                   th:href="@{/jobs(page=${currentPage + 1})}">
+                    Next
+                </a>
+
+            </li>
+
+        </ul>
+
+    </nav>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script th:inline="javascript">
+
+    const ctx = document.getElementById('jobChart');
+
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: [
+                'Applied',
+                'Interview',
+                'Selected',
+                'Rejected'
+            ],
+            datasets: [{
+                data: [
+                    [[${appliedCount}]],
+                    [[${interviewCount}]],
+                    [[${selectedCount}]],
+                    [[${rejectedCount}]]
+                ]
+            }]
+        }
+    });
+
+</script>
+
+</body>
+</html>
